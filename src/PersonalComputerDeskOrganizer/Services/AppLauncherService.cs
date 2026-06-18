@@ -17,7 +17,7 @@ namespace PersonalComputerDeskOrganizer.Services;
 /// </summary>
 public class AppLauncherService
 {
-    private static readonly TimeSpan WaitTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan WaitTimeout = TimeSpan.FromSeconds(45);
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(200);
 
     /// <summary>Starts the division's target and returns the HWND of its new window, or IntPtr.Zero on failure/timeout.</summary>
