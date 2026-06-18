@@ -31,6 +31,12 @@ public class ProfileLaunchOrchestrator
             var virtualDesktop = virtualDesktops[i];
             string deskLabel = string.IsNullOrWhiteSpace(deskConfig.Name) ? $"Bureau {i + 1}" : deskConfig.Name!;
 
+            // Switch to this desktop FIRST, before launching anything on it. New windows are
+            // created on whichever desktop is active at that moment — switching afterward
+            // (once the window already exists) is too late and causes exactly the symptom of
+            // "the app opens wherever I happened to be," which gets worse the slower the app is.
+            _desktops.SwitchTo(virtualDesktop);
+
             var regions = _placement.ComputeRegions(deskConfig.Layout);
 
             for (int j = 0; j < deskConfig.Divisions.Count && j < regions.Count; j++)
@@ -48,10 +54,17 @@ public class ProfileLaunchOrchestrator
                     continue;
                 }
 
+                // Belt-and-suspenders: the window should already be on the right desktop since
+                // it was active when the window was created, but this is a harmless no-op if so.
                 _desktops.MoveWindowToDesktop(hwnd, virtualDesktop);
                 _placement.PlaceWindow(hwnd, regions[j]);
             }
         }
+
+        // Return to the first desktop once everything is set up, rather than leaving the
+        // user on whichever desktop happened to be processed last.
+        if (virtualDesktops.Count > 0)
+            _desktops.SwitchTo(virtualDesktops[0]);
 
         onProgress?.Invoke("Profil lancé.");
     }
