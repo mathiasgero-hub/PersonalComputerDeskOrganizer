@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
 using Microsoft.Win32;
 using PersonalComputerDeskOrganizer.Models;
 
@@ -6,14 +8,19 @@ namespace PersonalComputerDeskOrganizer.Services;
 
 /// <summary>
 /// Builds the searchable list of "every application on this PC" shown in the
-/// division picker. Windows has no single source of truth for this, so two
-/// sources are combined:
+/// division picker. Two sources are combined:
 ///
-///   1. Start Menu shortcuts (.lnk) — the most reliable source of an actually
-///      launchable path, resolved via <see cref="ShellLinkResolver"/>.
-///   2. Registry "Uninstall" keys — catches classic desktop apps that, for
-///      whatever reason, have no Start Menu shortcut. The DisplayIcon value is
-///      used as a best-effort executable path.
+///   1. PowerShell's built-in "Get-StartApps" cmdlet — returns every entry that
+///      appears in the Start Menu / Windows Search, classic Win32 apps AND
+///      Microsoft Store (packaged/UWP) apps alike, each with a Name and an
+///      AppID. For classic apps the AppID is a direct executable path; for
+///      packaged apps it's an AppUserModelId, launched later via the
+///      "shell:AppsFolder\{AppUserModelId}" trick that Explorer resolves
+///      without needing the WinRT activation APIs. This single source covers
+///      apps like WhatsApp Desktop, which many users now have installed as a
+///      Store package rather than a classic installer.
+///   2. Registry "Uninstall" keys — a fallback for the rare classic app that,
+///      for some reason, has no Start Menu entry at all.
 ///
 /// Results are cached in memory; call <see cref="GetInstalledAppsAsync"/> with
 /// forceRefresh = true (wired to the "actualiser la liste" button) to rescan.
@@ -29,70 +36,71 @@ public class InstalledAppsService
 
         var apps = new Dictionary<string, InstalledApp>(StringComparer.OrdinalIgnoreCase);
 
-        await Task.Run(() => ScanStartMenuShortcuts(apps));
+        await ScanStartAppsAsync(apps);
         await Task.Run(() => ScanRegistryUninstallKeys(apps));
-        // Packaged/Store app scanning is temporarily disabled — it needs an extra Windows SDK
-        // contract reference (Microsoft.Windows.SDK.Contracts) that wasn't wired correctly.
-        // Start Menu + registry scanning already cover the vast majority of installed software.
-        // await ScanPackagedAppsAsync(apps);
 
         _cache = apps.Values.OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
         return _cache;
     }
 
-    // ---- 1. Start Menu shortcuts -------------------------------------------------
+    // ---- 1. Get-StartApps (covers classic AND Microsoft Store apps) ---------------
 
-    private static void ScanStartMenuShortcuts(Dictionary<string, InstalledApp> apps)
+    private static async Task ScanStartAppsAsync(Dictionary<string, InstalledApp> apps)
     {
-        string[] roots =
+        try
         {
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu),
-            Environment.GetFolderPath(Environment.SpecialFolder.StartMenu)
-        };
-
-        foreach (var root in roots)
-        {
-            if (!Directory.Exists(root)) continue;
-
-            IEnumerable<string> shortcuts;
-            try { shortcuts = Directory.EnumerateFiles(root, "*.lnk", SearchOption.AllDirectories); }
-            catch { continue; }
-
-            foreach (var lnk in shortcuts)
+            var psi = new ProcessStartInfo
             {
-                string name = Path.GetFileNameWithoutExtension(lnk);
+                FileName = "powershell.exe",
+                Arguments = "-NoProfile -NonInteractive -Command \"Get-StartApps | ConvertTo-Json\"",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
 
-                if (LooksLikeNoise(name)) continue;
+            using var process = Process.Start(psi);
+            if (process is null) return;
+
+            string output = await process.StandardOutput.ReadToEndAsync();
+            await process.WaitForExitAsync();
+
+            if (string.IsNullOrWhiteSpace(output)) return;
+
+            using var doc = JsonDocument.Parse(output);
+            var root = doc.RootElement;
+
+            // Get-StartApps returns a single JSON object instead of an array when there's
+            // only one matching app; normalize both shapes to a flat list.
+            var elements = root.ValueKind == JsonValueKind.Array
+                ? root.EnumerateArray().ToList()
+                : new List<JsonElement> { root };
+
+            foreach (var el in elements)
+            {
+                string? name = el.TryGetProperty("Name", out var n) ? n.GetString() : null;
+                string? appId = el.TryGetProperty("AppID", out var a) ? a.GetString() : null;
+                if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(appId)) continue;
                 if (apps.ContainsKey(name)) continue;
 
-                string? target = ShellLinkResolver.ResolveTarget(lnk);
-                if (string.IsNullOrWhiteSpace(target) || !target.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                    continue;
-                if (!File.Exists(target)) continue;
+                bool isExePath = appId.Length > 3 && appId[1] == ':' && appId.EndsWith(".exe", StringComparison.OrdinalIgnoreCase);
+
+                if (isExePath && !File.Exists(appId)) continue;
 
                 apps[name] = new InstalledApp
                 {
                     Name = name,
-                    LaunchTarget = target,
-                    Source = InstalledAppSource.StartMenuShortcut
+                    LaunchTarget = isExePath ? appId : $"shell:AppsFolder\\{appId}",
+                    Source = isExePath ? InstalledAppSource.StartMenuShortcut : InstalledAppSource.PackagedApp
                 };
             }
         }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Get-StartApps scan failed: {ex.Message}");
+        }
     }
 
-    private static bool LooksLikeNoise(string name)
-    {
-        string lower = name.ToLowerInvariant();
-        return lower.Contains("uninstall")
-            || lower.Contains("readme")
-            || lower.Contains("read me")
-            || lower.Contains("website")
-            || lower.Contains("help")
-            || lower.Contains("licence")
-            || lower.Contains("license");
-    }
-
-    // ---- 2. Registry uninstall keys -----------------------------------------------
+    // ---- 2. Registry uninstall keys (fallback) -------------------------------------
 
     private static readonly string[] UninstallKeyPaths =
     {
@@ -116,7 +124,7 @@ public class InstalledAppsService
 
                     string? displayName = entry.GetValue("DisplayName") as string;
                     if (string.IsNullOrWhiteSpace(displayName)) continue;
-                    if (apps.ContainsKey(displayName)) continue; // Start Menu scan already found a better path
+                    if (apps.ContainsKey(displayName)) continue; // Get-StartApps already found a better path
                     if ((entry.GetValue("SystemComponent") as int?) == 1) continue; // hide OS components
 
                     string? exePath = TryGetExecutableFromUninstallEntry(entry);
@@ -158,44 +166,4 @@ public class InstalledAppsService
 
         return null;
     }
-
-    // ---- 3. Packaged / Microsoft Store apps ----------------------------------------
-    // Disabled for now: Windows.ApplicationModel.AppListEntry needs the
-    // Microsoft.Windows.SDK.Contracts NuGet package to resolve in a classic (non-packaged)
-    // desktop app, which wasn't wired up correctly. Re-enable by adding that package reference
-    // to the .csproj and restoring the body below.
-    //
-    // private static async Task ScanPackagedAppsAsync(Dictionary<string, InstalledApp> apps)
-    // {
-    //     try
-    //     {
-    //         var packageManager = new Windows.Management.Deployment.PackageManager();
-    //
-    //         foreach (var package in packageManager.FindPackagesForUser(string.Empty))
-    //         {
-    //             if (package.IsFramework || package.IsResourcePackage) continue;
-    //
-    //             IReadOnlyList<Windows.ApplicationModel.AppListEntry> entries;
-    //             try { entries = await package.GetAppListEntriesAsync(); }
-    //             catch { continue; }
-    //
-    //             foreach (var entry in entries)
-    //             {
-    //                 string name = entry.DisplayInfo?.DisplayName ?? package.DisplayName;
-    //                 if (string.IsNullOrWhiteSpace(name) || apps.ContainsKey(name)) continue;
-    //
-    //                 apps[name] = new InstalledApp
-    //                 {
-    //                     Name = name,
-    //                     LaunchTarget = $"shell:AppsFolder\\{entry.AppUserModelId}",
-    //                     Source = InstalledAppSource.PackagedApp
-    //                 };
-    //             }
-    //         }
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         System.Diagnostics.Debug.WriteLine($"Packaged app scan failed: {ex.Message}");
-    //     }
-    // }
 }
