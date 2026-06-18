@@ -52,16 +52,27 @@ public partial class SplashWindow : Window
         // a single left click behave like the "..." affordance from the mockup instead
         // of requiring a right click.
         var button = (System.Windows.Controls.Button)sender;
-        if (button.ContextMenu != null)
+
+        if (button.DataContext is ProfileSummary summary && button.ContextMenu != null)
         {
+            // Stamp the profile directly onto each menu item's Tag rather than relying on
+            // DataContext inheritance through the ContextMenu's separate visual root, which
+            // doesn't reliably flow down to the MenuItems in every WPF version/scenario.
+            foreach (var item in button.ContextMenu.Items)
+            {
+                if (item is System.Windows.Controls.MenuItem menuItem)
+                    menuItem.Tag = summary;
+            }
+
             button.ContextMenu.IsOpen = true;
         }
+
         e.Handled = true;
     }
 
     private void EditProfile_Click(object sender, RoutedEventArgs e)
     {
-        if (((FrameworkElement)sender).DataContext is not ProfileSummary summary) return;
+        if (((System.Windows.Controls.MenuItem)sender).Tag is not ProfileSummary summary) return;
 
         var editor = new ProfileEditorWindow(summary.Profile.Clone());
         editor.ShowDialog();
@@ -70,7 +81,7 @@ public partial class SplashWindow : Window
 
     private void DeleteProfile_Click(object sender, RoutedEventArgs e)
     {
-        if (((FrameworkElement)sender).DataContext is not ProfileSummary summary) return;
+        if (((System.Windows.Controls.MenuItem)sender).Tag is not ProfileSummary summary) return;
 
         var result = MessageBox.Show(
             $"Supprimer définitivement le profil « {summary.Name} » ?\nCette action est irréversible.",
