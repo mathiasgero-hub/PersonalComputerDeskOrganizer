@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- net8.0-windows10.0.19041.0 is required by the VirtualDesktop library (C#/WinRT projection)
+         and also lets us call Windows.Management.Deployment.PackageManager for UWP app enumeration
+         without any extra NuGet package (the SDK projects WinRT APIs automatically for this TFM). -->
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>PersonalComputerDeskOrganizer</AssemblyName>
+    <RootNamespace>PersonalComputerDeskOrganizer</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <SelfContained>false</SelfContained>
+    <!-- Allows the published exe to run on a machine without the .NET 8 runtime pre-installed.
+         Set to false (and SelfContained=false above) if you prefer a smaller, framework-dependent build. -->
+    <PublishSingleFile>false</PublishSingleFile>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Virtual desktop creation / window-to-desktop assignment.
+         Actively maintained fork that recompiles its COM interop layer against the
+         running Windows build, which is what makes it resilient to Windows updates. -->
+    <PackageReference Include="Slions.VirtualDesktop" Version="6.9.2" />
+    <PackageReference Include="Slions.VirtualDesktop.WPF" Version="6.9.2" />
+
+    <!-- MVVM helpers: ObservableObject, RelayCommand, source generators for INotifyPropertyChanged -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+
+    <!-- Robust startup-task registration (Task Scheduler) so the app can launch at logon
+         with "highest available" privileges and a configurable delay/priority,
+         which is more reliable than a plain Run registry key. -->
+    <PackageReference Include="TaskScheduler" Version="2.12.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Fonts\*.ttf" />
+    <Resource Include="Assets\Icons\*.ico" />
+  </ItemGroup>
+
+</Project>

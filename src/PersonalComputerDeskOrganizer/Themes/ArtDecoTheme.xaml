@@ -1,0 +1,109 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Palette -->
+    <SolidColorBrush x:Key="DecoBlack" Color="#0A0A0D"/>
+    <SolidColorBrush x:Key="DecoCharcoal" Color="#15151B"/>
+    <SolidColorBrush x:Key="DecoCharcoal2" Color="#1B1B22"/>
+    <SolidColorBrush x:Key="DecoCharcoal3" Color="#22222B"/>
+    <SolidColorBrush x:Key="DecoGold" Color="#C9A227"/>
+    <SolidColorBrush x:Key="DecoGoldLight" Color="#E9CF6E"/>
+    <SolidColorBrush x:Key="DecoGoldDim" Color="#5E4F1C"/>
+    <SolidColorBrush x:Key="DecoTextMuted" Color="#9B9382"/>
+    <SolidColorBrush x:Key="DecoText" Color="#E8E2D0"/>
+    <SolidColorBrush x:Key="DecoDanger" Color="#B04A3C"/>
+
+    <!-- Fonts. Drop Cinzel-Regular.ttf / Cinzel-SemiBold.ttf into Assets/Fonts before
+         building for the exact look from the mockups; the app falls back to Georgia
+         automatically if the files are absent, so the build never fails on this. -->
+    <FontFamily x:Key="DecoDisplayFont">pack://application:,,,/Assets/Fonts/#Cinzel, Georgia, Times New Roman</FontFamily>
+    <FontFamily x:Key="DecoBodyFont">Segoe UI, Arial</FontFamily>
+
+    <!-- Buttons -->
+    <Style x:Key="DecoGoldButton" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource DecoDisplayFont}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="{StaticResource DecoGoldLight}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="20,10"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                            BorderBrush="{StaticResource DecoGold}" BorderThickness="1">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource DecoGold}"/>
+                            <Setter Property="Foreground" Value="{StaticResource DecoBlack}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="DecoGhostButton" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource DecoDisplayFont}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource DecoTextMuted}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="16,9"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{StaticResource DecoGoldDim}" BorderThickness="1">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Small icon-style button, used for the "..." profile menu and the division clear "x" -->
+    <Style x:Key="DecoIconButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource DecoCharcoal}"/>
+        <Setter Property="Foreground" Value="{StaticResource DecoTextMuted}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource DecoGoldDim}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Width" Value="22"/>
+        <Setter Property="Height" Value="22"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource DecoGoldLight}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="DecoTextBox" TargetType="TextBox">
+        <Setter Property="FontFamily" Value="{StaticResource DecoBodyFont}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource DecoGoldLight}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource DecoGoldLight}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource DecoGoldDim}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Padding" Value="2,6"/>
+        <Setter Property="FontSize" Value="15"/>
+    </Style>
+
+    <Style x:Key="DecoLabel" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource DecoDisplayFont}"/>
+        <Setter Property="Foreground" Value="{StaticResource DecoTextMuted}"/>
+        <Setter Property="FontSize" Value="11"/>
+    </Style>
+
+</ResourceDictionary>

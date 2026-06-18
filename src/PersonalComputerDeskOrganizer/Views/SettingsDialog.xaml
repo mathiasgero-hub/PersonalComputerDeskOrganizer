@@ -1,0 +1,29 @@
+<Window x:Class="PersonalComputerDeskOrganizer.Views.SettingsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Réglages"
+        WindowStyle="None"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Width="440" Height="220"
+        Background="{StaticResource DecoCharcoal}"
+        BorderBrush="{StaticResource DecoGold}" BorderThickness="1">
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="RÉGLAGES" FontFamily="{StaticResource DecoDisplayFont}"
+                   FontSize="16" Foreground="{StaticResource DecoGoldLight}" Margin="0,0,0,20"/>
+
+        <CheckBox x:Name="StartupCheckBox" Grid.Row="1" Content="Lancer au démarrage de Windows"
+                  Foreground="{StaticResource DecoText}" FontSize="13"
+                  Click="StartupCheckBox_Click"/>
+
+        <Button Grid.Row="3" Content="FERMER" Style="{StaticResource DecoGhostButton}"
+                HorizontalAlignment="Right" Click="Close_Click"/>
+    </Grid>
+</Window>

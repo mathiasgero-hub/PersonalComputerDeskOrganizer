@@ -1,0 +1,11 @@
+Placez ici une icône .ico (idéalement 256x256, multi-résolutions) pour
+l'exécutable et la barre des tâches, par exemple :
+
+  app.ico
+
+Puis ajoutez cette ligne dans le fichier .csproj :
+
+  <ApplicationIcon>Assets\Icons\app.ico</ApplicationIcon>
+
+Si ce dossier reste vide, l'application compile et fonctionne normalement
+avec l'icône par défaut de .NET.

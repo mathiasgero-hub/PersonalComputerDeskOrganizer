@@ -1,0 +1,14 @@
+Placez ici les fichiers de police Art Déco avant de compiler, par exemple :
+
+  Cinzel-Regular.ttf
+  Cinzel-SemiBold.ttf
+
+Téléchargement gratuit (licence OFL) : https://fonts.google.com/specimen/Cinzel
+
+Si vous possédez la police exacte utilisée dans vos images de référence,
+placez-la ici à la place (et mettez à jour le nom dans
+src/PersonalComputerDeskOrganizer/Themes/ArtDecoTheme.xaml, ressource
+"DecoDisplayFont").
+
+Si ce dossier reste vide, l'application compile et fonctionne normalement :
+elle utilise simplement une police de secours (Georgia) à la place.
