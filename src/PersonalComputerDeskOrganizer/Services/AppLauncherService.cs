@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.IO;
+using Microsoft.Win32;
 using PersonalComputerDeskOrganizer.Models;
 
 namespace PersonalComputerDeskOrganizer.Services;
@@ -44,11 +46,7 @@ public class AppLauncherService
         switch (division.Type)
         {
             case DivisionType.Url:
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = division.LaunchTarget,
-                    UseShellExecute = true
-                });
+                StartUrlInNewWindow(division.LaunchTarget!);
                 break;
 
             case DivisionType.File:
@@ -83,6 +81,75 @@ public class AppLauncherService
                 }
                 break;
         }
+    }
+
+    /// <summary>
+    /// Launches a URL in a brand-new browser window rather than as a new tab in
+    /// whichever browser window is already open. Browsers reuse an existing window
+    /// by default for plain shell-execute requests, which breaks the "one window per
+    /// zone" assumption — this detects the default browser and passes its
+    /// "new window" command-line flag explicitly. Falls back to a normal shell-execute
+    /// (which may still group into an existing window) if the default browser or its
+    /// flag can't be determined.
+    /// </summary>
+    private static void StartUrlInNewWindow(string url)
+    {
+        string? browserExe = GetDefaultBrowserExecutable();
+        string? newWindowArg = browserExe is null ? null : GetNewWindowArgument(browserExe);
+
+        if (browserExe is not null && newWindowArg is not null)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = browserExe,
+                Arguments = $"{newWindowArg} \"{url}\"",
+                UseShellExecute = false
+            });
+        }
+        else
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+        }
+    }
+
+    private static string? GetDefaultBrowserExecutable()
+    {
+        try
+        {
+            using var userChoiceKey = Registry.CurrentUser.OpenSubKey(
+                @"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice");
+            string? progId = userChoiceKey?.GetValue("ProgId") as string;
+            if (string.IsNullOrWhiteSpace(progId)) return null;
+
+            using var commandKey = Registry.ClassesRoot.OpenSubKey($@"{progId}\shell\open\command");
+            string? command = commandKey?.GetValue(null) as string;
+            if (string.IsNullOrWhiteSpace(command)) return null;
+
+            string exePath = command.StartsWith("\"")
+                ? command.Substring(1, command.IndexOf('"', 1) - 1)
+                : command.Split(' ')[0];
+
+            return File.Exists(exePath) ? exePath : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string? GetNewWindowArgument(string browserExePath)
+    {
+        string name = Path.GetFileNameWithoutExtension(browserExePath).ToLowerInvariant();
+        return name switch
+        {
+            "chrome" or "msedge" or "brave" or "opera" or "vivaldi" => "--new-window",
+            "firefox" => "-new-window",
+            _ => null
+        };
     }
 
     private static async Task<IntPtr> WaitForNewWindowAsync(HashSet<IntPtr> before)
