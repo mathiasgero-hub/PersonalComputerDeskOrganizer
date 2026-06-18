@@ -3,8 +3,7 @@ using System.Runtime.InteropServices;
 namespace PersonalComputerDeskOrganizer.Services;
 
 [StructLayout(LayoutKind.Sequential)]
-internal struct RECT
-{
+public struct RECT{
     public int Left, Top, Right, Bottom;
     public int Width => Right - Left;
     public int Height => Bottom - Top;
