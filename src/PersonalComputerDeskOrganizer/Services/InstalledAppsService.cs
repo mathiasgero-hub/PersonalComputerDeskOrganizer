@@ -6,7 +6,7 @@ namespace PersonalComputerDeskOrganizer.Services;
 
 /// <summary>
 /// Builds the searchable list of "every application on this PC" shown in the
-/// division picker. Windows has no single source of truth for this, so three
+/// division picker. Windows has no single source of truth for this, so two
 /// sources are combined:
 ///
 ///   1. Start Menu shortcuts (.lnk) — the most reliable source of an actually
@@ -14,10 +14,6 @@ namespace PersonalComputerDeskOrganizer.Services;
 ///   2. Registry "Uninstall" keys — catches classic desktop apps that, for
 ///      whatever reason, have no Start Menu shortcut. The DisplayIcon value is
 ///      used as a best-effort executable path.
-///   3. Packaged / Microsoft Store (UWP) apps — enumerated through
-///      Windows.Management.Deployment.PackageManager and launched later via
-///      the "shell:AppsFolder\{AppUserModelId}" trick, which Explorer resolves
-///      without needing full WinRT activation plumbing.
 ///
 /// Results are cached in memory; call <see cref="GetInstalledAppsAsync"/> with
 /// forceRefresh = true (wired to the "actualiser la liste" button) to rescan.
@@ -35,7 +31,10 @@ public class InstalledAppsService
 
         await Task.Run(() => ScanStartMenuShortcuts(apps));
         await Task.Run(() => ScanRegistryUninstallKeys(apps));
-        await ScanPackagedAppsAsync(apps);
+        // Packaged/Store app scanning is temporarily disabled — it needs an extra Windows SDK
+        // contract reference (Microsoft.Windows.SDK.Contracts) that wasn't wired correctly.
+        // Start Menu + registry scanning already cover the vast majority of installed software.
+        // await ScanPackagedAppsAsync(apps);
 
         _cache = apps.Values.OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
         return _cache;
@@ -161,40 +160,42 @@ public class InstalledAppsService
     }
 
     // ---- 3. Packaged / Microsoft Store apps ----------------------------------------
-
-    private static async Task ScanPackagedAppsAsync(Dictionary<string, InstalledApp> apps)
-    {
-        try
-        {
-            var packageManager = new Windows.Management.Deployment.PackageManager();
-
-            foreach (var package in packageManager.FindPackagesForUser(string.Empty))
-            {
-                if (package.IsFramework || package.IsResourcePackage) continue;
-
-                IReadOnlyList<Windows.ApplicationModel.AppListEntry> entries;
-                try { entries = await package.GetAppListEntriesAsync(); }
-                catch { continue; }
-
-                foreach (var entry in entries)
-                {
-                    string name = entry.DisplayInfo?.DisplayName ?? package.DisplayName;
-                    if (string.IsNullOrWhiteSpace(name) || apps.ContainsKey(name)) continue;
-
-                    apps[name] = new InstalledApp
-                    {
-                        Name = name,
-                        LaunchTarget = $"shell:AppsFolder\\{entry.AppUserModelId}",
-                        Source = InstalledAppSource.PackagedApp
-                    };
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            // Packaged-app enumeration can be unavailable in some environments (e.g. locked-down
-            // corporate images); the rest of the app must keep working without it.
-            System.Diagnostics.Debug.WriteLine($"Packaged app scan failed: {ex.Message}");
-        }
-    }
+    // Disabled for now: Windows.ApplicationModel.AppListEntry needs the
+    // Microsoft.Windows.SDK.Contracts NuGet package to resolve in a classic (non-packaged)
+    // desktop app, which wasn't wired up correctly. Re-enable by adding that package reference
+    // to the .csproj and restoring the body below.
+    //
+    // private static async Task ScanPackagedAppsAsync(Dictionary<string, InstalledApp> apps)
+    // {
+    //     try
+    //     {
+    //         var packageManager = new Windows.Management.Deployment.PackageManager();
+    //
+    //         foreach (var package in packageManager.FindPackagesForUser(string.Empty))
+    //         {
+    //             if (package.IsFramework || package.IsResourcePackage) continue;
+    //
+    //             IReadOnlyList<Windows.ApplicationModel.AppListEntry> entries;
+    //             try { entries = await package.GetAppListEntriesAsync(); }
+    //             catch { continue; }
+    //
+    //             foreach (var entry in entries)
+    //             {
+    //                 string name = entry.DisplayInfo?.DisplayName ?? package.DisplayName;
+    //                 if (string.IsNullOrWhiteSpace(name) || apps.ContainsKey(name)) continue;
+    //
+    //                 apps[name] = new InstalledApp
+    //                 {
+    //                     Name = name,
+    //                     LaunchTarget = $"shell:AppsFolder\\{entry.AppUserModelId}",
+    //                     Source = InstalledAppSource.PackagedApp
+    //                 };
+    //             }
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         System.Diagnostics.Debug.WriteLine($"Packaged app scan failed: {ex.Message}");
+    //     }
+    // }
 }
