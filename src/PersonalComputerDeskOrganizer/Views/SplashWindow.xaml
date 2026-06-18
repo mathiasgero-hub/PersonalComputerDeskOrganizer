@@ -76,12 +76,12 @@
                                         Margin="0,-6,-4,0" Style="{StaticResource DecoIconButton}"
                                         Click="ProfileMenu_Click">
                                     <Button.ContextMenu>
-                                        <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-                                            <MenuItem Header="Éditer" Click="EditProfile_Click"/>
-                                            <Separator/>
-                                            <MenuItem Header="Supprimer" Click="DeleteProfile_Click"/>
-                                        </ContextMenu>
-                                    </Button.ContextMenu>
+    <ContextMenu>
+        <MenuItem Header="Éditer" Click="EditProfile_Click"/>
+        <Separator/>
+        <MenuItem Header="Supprimer" Click="DeleteProfile_Click"/>
+    </ContextMenu>
+</Button.ContextMenu>
                                 </Button>
                             </Grid>
                             <TextBlock Text="{Binding Name}" FontFamily="{StaticResource DecoBodyFont}"
