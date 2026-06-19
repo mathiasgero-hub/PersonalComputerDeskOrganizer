@@ -10,6 +10,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>PersonalComputerDeskOrganizer</AssemblyName>
+<ApplicationIcon>Assets\Icons\app.ico</ApplicationIcon>
     <RootNamespace>PersonalComputerDeskOrganizer</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x64</Platforms>
