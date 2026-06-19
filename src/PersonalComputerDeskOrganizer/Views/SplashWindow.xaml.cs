@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using Microsoft.Win32;
 using PersonalComputerDeskOrganizer.Models;
 using PersonalComputerDeskOrganizer.Services;
 using PersonalComputerDeskOrganizer.ViewModels;
@@ -89,6 +90,69 @@ public partial class SplashWindow : Window
         ReloadProfiles();
     }
 
+    private void ExportProfile_Click(object sender, RoutedEventArgs e)
+    {
+        if (((System.Windows.Controls.MenuItem)sender).Tag is not ProfileSummary summary) return;
+
+        string safeName = string.Join("_", summary.Name.Split(System.IO.Path.GetInvalidFileNameChars()));
+        var dialog = new SaveFileDialog
+        {
+            Title = "Exporter le profil",
+            Filter = "Profil PersonalComputerDeskOrganizer (*.json)|*.json",
+            FileName = $"{safeName}.json"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            _storage.ExportToFile(summary.Profile, dialog.FileName);
+            MessageBox.Show(
+                $"Profil « {summary.Name} » exporté.\n\nCopiez ce fichier sur l'autre ordinateur puis utilisez " +
+                "« Importer un profil » sur l'écran d'accueil.\n\nNote : si les applications ne sont pas installées " +
+                "au même endroit sur l'autre PC, certaines zones devront être réassignées après import.",
+                "Export réussi",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Échec de l'export :\n{ex.Message}", "Erreur",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void ImportProfile_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Importer un profil",
+            Filter = "Profil PersonalComputerDeskOrganizer (*.json)|*.json"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            var profile = _storage.ImportFromFile(dialog.FileName);
+            _storage.Save(profile);
+            ReloadProfiles();
+
+            MessageBox.Show(
+                $"Profil « {profile.Name} » importé.\n\nSi certaines applications, fichiers ou URL ne s'ouvrent pas " +
+                "correctement, c'est probablement parce que leur emplacement diffère sur cet ordinateur — modifiez " +
+                "ces zones via « Éditer ».",
+                "Import réussi",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Échec de l'import :\n{ex.Message}", "Erreur",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
     private void NewProfile_Click(object sender, RoutedEventArgs e)
     {
         var countDialog = new DesktopCountDialog();
@@ -103,9 +167,7 @@ public partial class SplashWindow : Window
         ReloadProfiles();
     }
 
-    private void Settings_Click(object sender, RoutedEventArgs e) =>
-        new SettingsDialog { Owner = this }.ShowDialog();
+    private void Settings_Click(object sender, RoutedEventArgs e) => new SettingsDialog { Owner = this }.ShowDialog();
 
-    private void Quit_Click(object sender, RoutedEventArgs e) =>
-        Application.Current.Shutdown();
+    private void Quit_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
 }
