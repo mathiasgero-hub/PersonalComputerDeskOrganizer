@@ -49,6 +49,8 @@ public class ProfileLaunchOrchestrator
 
                 _desktops.MoveWindowToDesktop(hwnd, virtualDesktop);
                 _placement.PlaceWindow(hwnd, regions[j]);
+
+                _ = ReassertPlacementAsync(hwnd, regions[j]);
             }
         }
 
@@ -56,5 +58,14 @@ public class ProfileLaunchOrchestrator
             await _desktops.SwitchToAsync(virtualDesktops[0]);
 
         onProgress?.Invoke("Profil lancé.");
+    }
+
+    private async Task ReassertPlacementAsync(IntPtr hwnd, RECT region)
+    {
+        foreach (var delay in new[] { 1500, 3000, 5000 })
+        {
+            await Task.Delay(delay);
+            _placement.PlaceWindow(hwnd, region);
+        }
     }
 }
