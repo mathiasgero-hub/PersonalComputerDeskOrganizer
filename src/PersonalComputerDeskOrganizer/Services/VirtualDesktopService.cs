@@ -30,7 +30,44 @@ public class VirtualDesktopService
         return existing.Take(count).ToList();
     }
 
-    public void SwitchTo(VirtualDesktop desktop) => desktop.Switch();
+    /// <summary>
+    /// Switches to the given desktop and waits until Windows confirms the switch
+    /// actually took effect (VirtualDesktop.Current matches), retrying the switch
+    /// if needed. A bare "fire and forget" Switch() call can occasionally be a
+    /// no-op visually (e.g. if called before the previous switch's animation
+    /// settled), which is what caused windows to land on the wrong desktop.
+    /// </summary>
+    public async Task<bool> SwitchToAsync(VirtualDesktop desktop)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(3);
+
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                desktop.Switch();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Desktop switch attempt failed: {ex.Message}");
+            }
+
+            await Task.Delay(150);
+
+            try
+            {
+                if (VirtualDesktop.Current.Id == desktop.Id)
+                    return true;
+            }
+            catch
+            {
+                // VirtualDesktop.Current can occasionally throw right after a switch;
+                // just retry on the next loop iteration.
+            }
+        }
+
+        return false;
+    }
 
     /// <summary>Moves a window belonging to any process onto the given virtual desktop.</summary>
     public void MoveWindowToDesktop(IntPtr hwnd, VirtualDesktop desktop)
