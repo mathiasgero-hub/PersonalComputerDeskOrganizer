@@ -7,9 +7,35 @@
         ResizeMode="NoResize"
         Background="{StaticResource DecoBlack}">
 
-    <Grid>
+   <Grid>
 
-        <!-- corner ornaments -->
+    <!-- Art Déco tiled background pattern — fan/arch motif -->
+    <Rectangle IsHitTestVisible="False" Opacity="0.13">
+        <Rectangle.Fill>
+            <DrawingBrush TileMode="Tile"
+                          Viewport="0,0,200,112"
+                          ViewportUnits="Absolute">
+                <DrawingBrush.Drawing>
+                    <GeometryDrawing>
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#C9A227" Thickness="1"/>
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <GeometryGroup>
+                                <PathGeometry Figures="M0,90 A80,80 0 0 1 80,10 A80,80 0 0 1 160,90"/>
+                                <PathGeometry Figures="M16,90 A64,64 0 0 1 80,26 A64,64 0 0 1 144,90"/>
+                                <PathGeometry Figures="M32,90 A48,48 0 0 1 80,42 A48,48 0 0 1 128,90"/>
+                                <PathGeometry Figures="M48,90 A32,32 0 0 1 80,58 A32,32 0 0 1 112,90"/>
+                                <PathGeometry Figures="M64,90 A16,16 0 0 1 80,74 A16,16 0 0 1 96,90"/>
+                            </GeometryGroup>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingBrush.Drawing>
+            </DrawingBrush>
+        </Rectangle.Fill>
+    </Rectangle>
+
+    <!-- corner ornaments -->
         <Path Data="M2,90 A88,88 0 0 1 90,2 M2,74 A72,72 0 0 1 74,2 M2,58 A56,56 0 0 1 58,2 M2,42 A40,40 0 0 1 42,2"
               Stroke="{StaticResource DecoGold}" StrokeThickness="1.4"
               HorizontalAlignment="Left" VerticalAlignment="Top" Margin="26"/>
