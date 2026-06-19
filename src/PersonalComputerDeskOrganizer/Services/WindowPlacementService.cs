@@ -1,18 +1,5 @@
 namespace PersonalComputerDeskOrganizer.Services;
 
-/// <summary>
-/// Computes the rectangle for each division of a desktop layout, and moves a
-/// window's HWND to fill that rectangle exactly. The 1/2/3/4 layouts mirror the
-/// ones validated in the configuration screen mockup:
-///   1 -> single full-area zone
-///   2 -> two equal columns
-///   3 -> one full-width band on top, two equal columns below
-///   4 -> 2x2 grid
-///
-/// NOTE: v1 targets the primary monitor's work area (taskbar excluded). Spanning
-/// divisions across multiple physical monitors is a natural follow-up enhancement
-/// (see README "idées d'amélioration").
-/// </summary>
 public class WindowPlacementService
 {
     public List<RECT> ComputeRegions(int layout)
@@ -34,9 +21,9 @@ public class WindowPlacementService
             },
             3 => new List<RECT>
             {
-                Rect(left, top, w, halfH),                              // top band, full width
-                Rect(left, top + halfH, halfW, h - halfH),               // bottom-left
-                Rect(left + halfW, top + halfH, w - halfW, h - halfH)    // bottom-right
+                Rect(left, top, halfW, h),
+                Rect(left + halfW, top, w - halfW, halfH),
+                Rect(left + halfW, top + halfH, w - halfW, h - halfH)
             },
             4 => new List<RECT>
             {
@@ -54,7 +41,6 @@ public class WindowPlacementService
         Left = x, Top = y, Right = x + width, Bottom = y + height
     };
 
-    /// <summary>Removes any maximized state, then moves and resizes the window to exactly fill <paramref name="region"/>.</summary>
     public void PlaceWindow(IntPtr hwnd, RECT region)
     {
         if (hwnd == IntPtr.Zero) return;
