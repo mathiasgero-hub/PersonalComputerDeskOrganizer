@@ -36,7 +36,7 @@
         </StackPanel>
 
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="900">
-<Image Source="/Assets/Icons/app.ico" Width="72" Height="72"
+<Image Source="/Assets/Icons/app.ico" Width="144" Height="144"
        HorizontalAlignment="Center" Margin="0,0,0,24"
        RenderOptions.BitmapScalingMode="HighQuality"/>
 
