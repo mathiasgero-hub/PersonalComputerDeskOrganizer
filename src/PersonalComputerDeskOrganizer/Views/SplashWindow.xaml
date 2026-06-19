@@ -7,35 +7,33 @@
         ResizeMode="NoResize"
         Background="{StaticResource DecoBlack}">
 
-   <Grid>
+    <Grid>
 
-    <!-- Art Déco tiled background pattern — fan/arch motif -->
-    <Rectangle IsHitTestVisible="False" Opacity="0.13">
-        <Rectangle.Fill>
-            <DrawingBrush TileMode="Tile"
-                          Viewport="0,0,200,112"
-                          ViewportUnits="Absolute">
-                <DrawingBrush.Drawing>
-                    <GeometryDrawing>
-                        <GeometryDrawing.Pen>
-                            <Pen Brush="#C9A227" Thickness="1"/>
-                        </GeometryDrawing.Pen>
-                        <GeometryDrawing.Geometry>
-                            <GeometryGroup>
-                                <PathGeometry Figures="M0,90 A80,80 0 0 1 80,10 A80,80 0 0 1 160,90"/>
-                                <PathGeometry Figures="M16,90 A64,64 0 0 1 80,26 A64,64 0 0 1 144,90"/>
-                                <PathGeometry Figures="M32,90 A48,48 0 0 1 80,42 A48,48 0 0 1 128,90"/>
-                                <PathGeometry Figures="M48,90 A32,32 0 0 1 80,58 A32,32 0 0 1 112,90"/>
-                                <PathGeometry Figures="M64,90 A16,16 0 0 1 80,74 A16,16 0 0 1 96,90"/>
-                            </GeometryGroup>
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                </DrawingBrush.Drawing>
-            </DrawingBrush>
-        </Rectangle.Fill>
-    </Rectangle>
+        <Rectangle IsHitTestVisible="False" Opacity="0.13">
+            <Rectangle.Fill>
+                <DrawingBrush TileMode="Tile"
+                              Viewport="0,0,200,112"
+                              ViewportUnits="Absolute">
+                    <DrawingBrush.Drawing>
+                        <GeometryDrawing>
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#C9A227" Thickness="1"/>
+                            </GeometryDrawing.Pen>
+                            <GeometryDrawing.Geometry>
+                                <GeometryGroup>
+                                    <PathGeometry Figures="M0,90 A80,80 0 0 1 80,10 A80,80 0 0 1 160,90"/>
+                                    <PathGeometry Figures="M16,90 A64,64 0 0 1 80,26 A64,64 0 0 1 144,90"/>
+                                    <PathGeometry Figures="M32,90 A48,48 0 0 1 80,42 A48,48 0 0 1 128,90"/>
+                                    <PathGeometry Figures="M48,90 A32,32 0 0 1 80,58 A32,32 0 0 1 112,90"/>
+                                    <PathGeometry Figures="M64,90 A16,16 0 0 1 80,74 A16,16 0 0 1 96,90"/>
+                                </GeometryGroup>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                    </DrawingBrush.Drawing>
+                </DrawingBrush>
+            </Rectangle.Fill>
+        </Rectangle>
 
-    <!-- corner ornaments -->
         <Path Data="M2,90 A88,88 0 0 1 90,2 M2,74 A72,72 0 0 1 74,2 M2,58 A56,56 0 0 1 58,2 M2,42 A40,40 0 0 1 42,2"
               Stroke="{StaticResource DecoGold}" StrokeThickness="1.4"
               HorizontalAlignment="Left" VerticalAlignment="Top" Margin="26"/>
@@ -55,16 +53,16 @@
             <Path.RenderTransform><ScaleTransform ScaleX="-1" ScaleY="-1"/></Path.RenderTransform>
         </Path>
 
-        <!-- quit + settings buttons, top-right, deliberately understated -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,40,40,0">
             <Button Content="⚙" Click="Settings_Click" Style="{StaticResource DecoIconButton}" Margin="0,0,8,0"/>
             <Button Content="✕" Click="Quit_Click" Style="{StaticResource DecoIconButton}"/>
         </StackPanel>
 
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="900">
-<Image Source="/Assets/Icons/app_logo.png" Width="144" Height="144"
-       HorizontalAlignment="Center" Margin="0,0,0,24"
-       RenderOptions.BitmapScalingMode="HighQuality"/>
+
+            <Image Source="/Assets/Icons/app_logo.png" Width="144" Height="144"
+                   HorizontalAlignment="Center" Margin="0,0,0,24"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
 
             <TextBlock Text="bienvenue" Style="{StaticResource DecoLabel}"
                        HorizontalAlignment="Center" Margin="0,0,0,14"/>
@@ -105,12 +103,13 @@
                                         Margin="0,-6,-4,0" Style="{StaticResource DecoIconButton}"
                                         Click="ProfileMenu_Click">
                                     <Button.ContextMenu>
-    <ContextMenu>
-        <MenuItem Header="Éditer" Click="EditProfile_Click"/>
-        <Separator/>
-        <MenuItem Header="Supprimer" Click="DeleteProfile_Click"/>
-    </ContextMenu>
-</Button.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Éditer" Click="EditProfile_Click"/>
+                                            <MenuItem Header="Exporter…" Click="ExportProfile_Click"/>
+                                            <Separator/>
+                                            <MenuItem Header="Supprimer" Click="DeleteProfile_Click"/>
+                                        </ContextMenu>
+                                    </Button.ContextMenu>
                                 </Button>
                             </Grid>
                             <TextBlock Text="{Binding Name}" FontFamily="{StaticResource DecoBodyFont}"
@@ -123,6 +122,12 @@
 
             <Button Content="+ NOUVEAU PROFIL" Style="{StaticResource DecoGoldButton}"
                     HorizontalAlignment="Center" Click="NewProfile_Click"/>
+
+            <Button Content="Importer un profil…" Click="ImportProfile_Click"
+                    HorizontalAlignment="Center" Margin="0,18,0,0"
+                    Background="Transparent" BorderThickness="0"
+                    Foreground="{StaticResource DecoTextMuted}"
+                    FontFamily="{StaticResource DecoBodyFont}" FontSize="12" Cursor="Hand"/>
 
         </StackPanel>
 
