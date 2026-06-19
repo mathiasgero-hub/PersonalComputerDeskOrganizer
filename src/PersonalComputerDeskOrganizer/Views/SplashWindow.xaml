@@ -36,6 +36,9 @@
         </StackPanel>
 
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="900">
+<Image Source="/Assets/Icons/app.ico" Width="72" Height="72"
+       HorizontalAlignment="Center" Margin="0,0,0,24"
+       RenderOptions.BitmapScalingMode="HighQuality"/>
 
             <TextBlock Text="bienvenue" Style="{StaticResource DecoLabel}"
                        HorizontalAlignment="Center" Margin="0,0,0,14"/>
