@@ -38,8 +38,6 @@ public partial class ProfileEditorWindow : Window
         };
     }
 
-    // ---- layout helpers shared between the real division grid and the tiny layout-picker icons ----
-
     private static (int rows, int cols) GetGridSize(int layout) => layout switch
     {
         1 => (1, 1),
@@ -49,16 +47,14 @@ public partial class ProfileEditorWindow : Window
         _ => (1, 1)
     };
 
-    private static List<(int row, int col, int colSpan)> GetCellPlacements(int layout) => layout switch
+    private static List<(int row, int col, int colSpan, int rowSpan)> GetCellPlacements(int layout) => layout switch
     {
-        1 => new() { (0, 0, 1) },
-        2 => new() { (0, 0, 1), (0, 1, 1) },
-        3 => new() { (0, 0, 2), (1, 0, 1), (1, 1, 1) },
-        4 => new() { (0, 0, 1), (0, 1, 1), (1, 0, 1), (1, 1, 1) },
-        _ => new() { (0, 0, 1) }
+        1 => new() { (0, 0, 1, 1) },
+        2 => new() { (0, 0, 1, 1), (0, 1, 1, 1) },
+        3 => new() { (0, 0, 1, 2), (0, 1, 1, 1), (1, 1, 1, 1) },
+        4 => new() { (0, 0, 1, 1), (0, 1, 1, 1), (1, 0, 1, 1), (1, 1, 1, 1) },
+        _ => new() { (0, 0, 1, 1) }
     };
-
-    // ---- top-level rendering --------------------------------------------------------------------
 
     private void RenderAll()
     {
@@ -82,7 +78,6 @@ public partial class ProfileEditorWindow : Window
         rootGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         rootGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-        // header
         var header = new Grid { Margin = new Thickness(16, 12, 16, 12) };
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -113,7 +108,6 @@ public partial class ProfileEditorWindow : Window
         };
         Grid.SetRow(headerBorder, 0);
 
-        // body (the actual divisions, fixed 16:9-ish height matching the validated mockup)
         var bodyHost = new Border { Padding = new Thickness(3) };
         bodyHost.Child = BuildDivisionsGrid(desk, deskIndex, height: 240);
         Grid.SetRow(bodyHost, 1);
@@ -133,7 +127,7 @@ public partial class ProfileEditorWindow : Window
         for (int r = 0; r < rows; r++) icon.RowDefinitions.Add(new RowDefinition());
         for (int c = 0; c < cols; c++) icon.ColumnDefinitions.Add(new ColumnDefinition());
 
-        foreach (var (row, col, colSpan) in GetCellPlacements(n))
+        foreach (var (row, col, colSpan, rowSpan) in GetCellPlacements(n))
         {
             var rect = new System.Windows.Shapes.Rectangle
             {
@@ -144,6 +138,7 @@ public partial class ProfileEditorWindow : Window
             Grid.SetRow(rect, row);
             Grid.SetColumn(rect, col);
             Grid.SetColumnSpan(rect, colSpan);
+            Grid.SetRowSpan(rect, rowSpan);
             icon.Children.Add(rect);
         }
 
@@ -176,11 +171,12 @@ public partial class ProfileEditorWindow : Window
         var placements = GetCellPlacements(desk.Layout);
         for (int j = 0; j < placements.Count && j < desk.Divisions.Count; j++)
         {
-            var (row, col, colSpan) = placements[j];
+            var (row, col, colSpan, rowSpan) = placements[j];
             var cell = BuildDivisionCell(desk, deskIndex, j);
             Grid.SetRow(cell, row);
             Grid.SetColumn(cell, col);
             Grid.SetColumnSpan(cell, colSpan);
+            Grid.SetRowSpan(cell, rowSpan);
             grid.Children.Add(cell);
         }
 
@@ -272,8 +268,6 @@ public partial class ProfileEditorWindow : Window
 
         return cell;
     }
-
-    // ---- application / file / url picker ---------------------------------------------------------
 
     private async void OpenAppPicker(DesktopConfig desk, int deskIndex, int divIndex, FrameworkElement anchor)
     {
@@ -438,8 +432,6 @@ public partial class ProfileEditorWindow : Window
         popup.IsOpen = true;
         search.Focus();
     }
-
-    // ---- top bar actions ----------------------------------------------------------------------
 
     private void DeskCountMinus_Click(object sender, RoutedEventArgs e) => ChangeDeskCount(-1);
     private void DeskCountPlus_Click(object sender, RoutedEventArgs e) => ChangeDeskCount(1);
