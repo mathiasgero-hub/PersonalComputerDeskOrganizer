@@ -33,10 +33,7 @@
     <!-- MVVM helpers: ObservableObject, RelayCommand, source generators for INotifyPropertyChanged -->
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
 
-    <!-- Robust startup-task registration (Task Scheduler) so the app can launch at logon
-         with "highest available" privileges and a configurable delay/priority,
-         which is more reliable than a plain Run registry key. -->
-    <PackageReference Include="TaskScheduler" Version="2.12.2" />
+   
   </ItemGroup>
 
   <ItemGroup>
