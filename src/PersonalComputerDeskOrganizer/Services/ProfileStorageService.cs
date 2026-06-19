@@ -4,12 +4,6 @@ using PersonalComputerDeskOrganizer.Models;
 
 namespace PersonalComputerDeskOrganizer.Services;
 
-/// <summary>
-/// Reads and writes <see cref="Profile"/> objects as individual JSON files under
-/// %AppData%\PersonalComputerDeskOrganizer\Profiles. Plain files were chosen over a
-/// database because the data is small, rarely written, and benefits from being
-/// human-readable / easy to back up or hand-edit.
-/// </summary>
 public class ProfileStorageService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -43,7 +37,6 @@ public class ProfileStorageService
             }
             catch (Exception ex)
             {
-                // A single corrupt profile file should never prevent the rest from loading.
                 System.Diagnostics.Debug.WriteLine($"Failed to load profile '{file}': {ex.Message}");
             }
         }
@@ -63,5 +56,23 @@ public class ProfileStorageService
         string path = PathFor(profileId);
         if (File.Exists(path))
             File.Delete(path);
+    }
+
+    public void ExportToFile(Profile profile, string filePath)
+    {
+        string json = JsonSerializer.Serialize(profile, JsonOptions);
+        File.WriteAllText(filePath, json);
+    }
+
+    public Profile ImportFromFile(string filePath)
+    {
+        string json = File.ReadAllText(filePath);
+        var profile = JsonSerializer.Deserialize<Profile>(json, JsonOptions)
+            ?? throw new InvalidOperationException("Fichier de profil invalide ou corrompu.");
+
+        profile.Id = Guid.NewGuid().ToString("N");
+        profile.CreatedAt = DateTime.Now;
+        profile.LastModifiedAt = DateTime.Now;
+        return profile;
     }
 }
