@@ -5,32 +5,23 @@ using PersonalComputerDeskOrganizer.Models;
 
 namespace PersonalComputerDeskOrganizer.Services;
 
-/// <summary>
-/// Launches whatever a division is configured to open, and waits for the
-/// resulting top-level window to appear so it can be moved/resized.
-///
-/// Rather than relying solely on Process.MainWindowHandle — which is unreliable
-/// for apps that launch via a separate host process (packaged/UWP apps) or that
-/// spawn helper processes before showing their real window (many Electron/Chromium
-/// based apps) — this takes a snapshot of all visible windows just before
-/// launching, then polls for a new visible window to appear afterward.
-/// </summary>
 public class AppLauncherService
 {
-    private static readonly TimeSpan WaitTimeout = TimeSpan.FromSeconds(45);
-    private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(200);
+    private static readonly TimeSpan WaitTimeout = TimeSpan.FromSeconds(90);
+    private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(250);
+    private static readonly TimeSpan StabilizationPeriod = TimeSpan.FromMilliseconds(1200);
 
-    /// <summary>Starts the division's target and returns the HWND of its new window, or IntPtr.Zero on failure/timeout.</summary>
     public async Task<IntPtr> LaunchAndWaitForWindowAsync(DivisionConfig division)
     {
         if (!division.IsFilled || division.LaunchTarget is null)
             return IntPtr.Zero;
 
         var before = NativeMethods.SnapshotVisibleWindows();
+        Process? tracked;
 
         try
         {
-            Start(division);
+            tracked = Start(division);
         }
         catch (Exception ex)
         {
@@ -38,16 +29,16 @@ public class AppLauncherService
             return IntPtr.Zero;
         }
 
-        return await WaitForNewWindowAsync(before);
+        return await WaitForStableWindowAsync(before, tracked);
     }
 
-    private static void Start(DivisionConfig division)
+    private static Process? Start(DivisionConfig division)
     {
         switch (division.Type)
         {
             case DivisionType.Url:
                 StartUrlInNewWindow(division.LaunchTarget!);
-                break;
+                return null;
 
             case DivisionType.File:
                 Process.Start(new ProcessStartInfo
@@ -55,12 +46,10 @@ public class AppLauncherService
                     FileName = division.LaunchTarget,
                     UseShellExecute = true
                 });
-                break;
+                return null;
 
             case DivisionType.App:
             default:
-                // "shell:AppsFolder\{aumid}" (packaged apps) must go through explorer.exe;
-                // regular .exe paths can be started directly.
                 if (division.LaunchTarget!.StartsWith("shell:", StringComparison.OrdinalIgnoreCase))
                 {
                     Process.Start(new ProcessStartInfo
@@ -69,29 +58,20 @@ public class AppLauncherService
                         Arguments = division.LaunchTarget,
                         UseShellExecute = true
                     });
+                    return null;
                 }
                 else
                 {
-                    Process.Start(new ProcessStartInfo
+                    return Process.Start(new ProcessStartInfo
                     {
                         FileName = division.LaunchTarget,
                         Arguments = division.Arguments ?? "",
                         UseShellExecute = true
                     });
                 }
-                break;
         }
     }
 
-    /// <summary>
-    /// Launches a URL in a brand-new browser window rather than as a new tab in
-    /// whichever browser window is already open. Browsers reuse an existing window
-    /// by default for plain shell-execute requests, which breaks the "one window per
-    /// zone" assumption — this detects the default browser and passes its
-    /// "new window" command-line flag explicitly. Falls back to a normal shell-execute
-    /// (which may still group into an existing window) if the default browser or its
-    /// flag can't be determined.
-    /// </summary>
     private static void StartUrlInNewWindow(string url)
     {
         string? browserExe = GetDefaultBrowserExecutable();
@@ -152,22 +132,72 @@ public class AppLauncherService
         };
     }
 
-    private static async Task<IntPtr> WaitForNewWindowAsync(HashSet<IntPtr> before)
+    private static async Task<IntPtr> WaitForStableWindowAsync(HashSet<IntPtr> before, Process? trackedProcess)
     {
         var deadline = DateTime.UtcNow + WaitTimeout;
-        IntPtr ownHwnd = System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
+        IntPtr ownHwnd = Process.GetCurrentProcess().MainWindowHandle;
+
+        var firstSeenAt = new Dictionary<IntPtr, DateTime>();
+        IntPtr currentBest = IntPtr.Zero;
+        DateTime currentBestSince = DateTime.MinValue;
 
         while (DateTime.UtcNow < deadline)
         {
             await Task.Delay(PollInterval);
 
-            var after = NativeMethods.SnapshotVisibleWindows();
-            var newWindows = after.Except(before).Where(h => h != ownHwnd).ToList();
+            bool processGone = trackedProcess is not null && trackedProcess.HasExited;
+            var candidates = (trackedProcess is not null && !processGone)
+                ? GetVisibleWindowsForProcess(trackedProcess.Id)
+                : NativeMethods.SnapshotVisibleWindows().Except(before).Where(h => h != ownHwnd).ToHashSet();
 
-            if (newWindows.Count > 0)
-                return newWindows[0];
+            foreach (var seenHwnd in firstSeenAt.Keys.ToList())
+            {
+                if (!candidates.Contains(seenHwnd))
+                    firstSeenAt.Remove(seenHwnd);
+            }
+
+            foreach (var hwnd in candidates)
+            {
+                if (!firstSeenAt.ContainsKey(hwnd))
+                    firstSeenAt[hwnd] = DateTime.UtcNow;
+            }
+
+            if (candidates.Count == 0)
+            {
+                currentBest = IntPtr.Zero;
+                continue;
+            }
+
+            IntPtr newest = candidates.OrderByDescending(h => firstSeenAt[h]).First();
+
+            if (newest != currentBest)
+            {
+                currentBest = newest;
+                currentBestSince = DateTime.UtcNow;
+            }
+            else if (DateTime.UtcNow - currentBestSince >= StabilizationPeriod)
+            {
+                return currentBest;
+            }
         }
 
-        return IntPtr.Zero;
+        return currentBest;
+    }
+
+    private static HashSet<IntPtr> GetVisibleWindowsForProcess(int processId)
+    {
+        var result = new HashSet<IntPtr>();
+        NativeMethods.EnumWindows((hWnd, _) =>
+        {
+            if (!NativeMethods.IsWindowVisible(hWnd) || NativeMethods.GetWindowTextLength(hWnd) <= 0)
+                return true;
+
+            NativeMethods.GetWindowThreadProcessId(hWnd, out uint pid);
+            if (pid == (uint)processId)
+                result.Add(hWnd);
+
+            return true;
+        }, IntPtr.Zero);
+        return result;
     }
 }
