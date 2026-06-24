@@ -167,8 +167,12 @@ public partial class SplashWindow : Window
         ReloadProfiles();
     }
 
-    private void Settings_Click(object sender, RoutedEventArgs e) => new SettingsDialog { Owner = this }.ShowDialog();
-private void Minimize_Click(object sender, RoutedEventArgs e) =>
-    WindowState = WindowState.Minimized;
-    private void Quit_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
+    private void Settings_Click(object sender, RoutedEventArgs e) =>
+        new SettingsDialog { Owner = this }.ShowDialog();
+
+    private void Minimize_Click(object sender, RoutedEventArgs e) =>
+        WindowState = WindowState.Minimized;
+
+    private void Quit_Click(object sender, RoutedEventArgs e) =>
+        Application.Current.Shutdown();
 }
