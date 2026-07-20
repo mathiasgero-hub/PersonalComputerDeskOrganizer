@@ -3,9 +3,10 @@ name: Build PersonalComputerDeskOrganizer
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
   workflow_dispatch: {}
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -23,15 +24,19 @@ jobs:
       - name: Restore
         run: dotnet restore src/PersonalComputerDeskOrganizer/PersonalComputerDeskOrganizer.csproj
 
-      - name: Build
-        run: dotnet build src/PersonalComputerDeskOrganizer/PersonalComputerDeskOrganizer.csproj -c Release --no-restore
+      - name: Publish (self-contained, single exe)
+        run: dotnet publish src/PersonalComputerDeskOrganizer/PersonalComputerDeskOrganizer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish
 
-      - name: Publish (framework-dependent, win-x64)
-        run: dotnet publish src/PersonalComputerDeskOrganizer/PersonalComputerDeskOrganizer.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=false -o publish
+      - name: Zip the output
+        run: Compress-Archive -Path publish\* -DestinationPath PersonalComputerDeskOrganizer.zip
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: PersonalComputerDeskOrganizer-${{ github.run_number }}
-          path: publish/**
-          if-no-files-found: error
+      - name: Delete existing latest release
+        run: gh release delete latest --yes --cleanup-tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Create GitHub Release
+        run: gh release create latest PersonalComputerDeskOrganizer.zip --title "PersonalComputerDeskOrganizer — dernière version" --notes "Build automatique du dernier commit sur main." --latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
