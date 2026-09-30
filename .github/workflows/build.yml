@@ -13,6 +13,9 @@ jobs:
   build:
     runs-on: windows-latest
 
+    env:
+      APP_VERSION: 1.0.${{ github.run_number }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,10 +29,17 @@ jobs:
         run: dotnet restore src/PersonalComputerDeskOrganizer/PersonalComputerDeskOrganizer.csproj
 
       - name: Publish (self-contained, single exe)
-        run: dotnet publish src/PersonalComputerDeskOrganizer/PersonalComputerDeskOrganizer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish
+        run: dotnet publish src/PersonalComputerDeskOrganizer/PersonalComputerDeskOrganizer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:Version=${{ env.APP_VERSION }} -o publish
 
       - name: Zip the output
         run: Compress-Archive -Path publish\* -DestinationPath PersonalComputerDeskOrganizer.zip
+
+      - name: Build installer (Inno Setup)
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
+          & $iscc /DMyAppVersion=${{ env.APP_VERSION }} installer\PersonalComputerDeskOrganizer.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Delete existing latest release
         run: gh release delete latest --yes --cleanup-tag
@@ -38,6 +48,6 @@ jobs:
         continue-on-error: true
 
       - name: Create GitHub Release
-        run: gh release create latest PersonalComputerDeskOrganizer.zip --title "PersonalComputerDeskOrganizer — dernière version" --notes "Build automatique du dernier commit sur main." --latest
+        run: gh release create latest installer-output\PersonalComputerDeskOrganizer-Setup.exe PersonalComputerDeskOrganizer.zip --title "PersonalComputerDeskOrganizer ${{ env.APP_VERSION }}" --notes "Build automatique du dernier commit sur main." --latest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

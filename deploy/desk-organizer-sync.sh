@@ -32,6 +32,15 @@ unzip -q "$tmp/$ASSET" -d "$tmp/x"
 exe=$(find "$tmp/x" -maxdepth 1 -iname '*.exe' | head -1)
 
 install -m 644 "$tmp/$ASSET" "$DL/$ASSET"
+
+# Installateur (présent depuis le build 1.0.x avec Inno Setup)
+SETUP="PersonalComputerDeskOrganizer-Setup.exe"
+setupSize=0
+if jq -e --arg n "$SETUP" '.assets[] | select(.name==$n)' <<<"$json" >/dev/null; then
+  curl -fsSL -o "$tmp/$SETUP" "https://github.com/$REPO/releases/download/latest/$SETUP"
+  install -m 644 "$tmp/$SETUP" "$DL/$SETUP"
+  setupSize=$(stat -c %s "$DL/$SETUP")
+fi
 if [ -n "$exe" ]; then
   # .gz servi par nginx (gzip_static) : ~80 Mo transférés au lieu de ~200 Mo
   gzip -9 -c "$exe" > "$tmp/exe.gz"
@@ -40,11 +49,12 @@ if [ -n "$exe" ]; then
 fi
 
 sha=$(git -C "$MIRROR" rev-parse --short main)
-jq -n --arg date "$(jq -r --arg n "$ASSET" '.assets[] | select(.name==$n) | .updated_at' <<<"$json")" \
+version=$(jq -r '.name' <<<"$json" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)
+jq -n --arg version "$version" --argjson setupSize "$setupSize" --arg date "$(jq -r --arg n "$ASSET" '.assets[] | select(.name==$n) | .updated_at' <<<"$json")" \
       --arg commit "$sha" \
       --arg message "$(git -C "$MIRROR" log -1 --format=%s main)" \
       --argjson zipSize "$(stat -c %s "$DL/$ASSET")" \
       --argjson exeSize "$( [ -n "$exe" ] && stat -c %s "$DL/PersonalComputerDeskOrganizer.exe" || echo 0)" \
-      '{date:$date, commit:$commit, message:$message, zipSize:$zipSize, exeSize:$exeSize}' > "$DL/version.json"
+      '{version:$version, setupSize:$setupSize, date:$date, commit:$commit, message:$message, zipSize:$zipSize, exeSize:$exeSize}' > "$DL/version.json"
 echo "$asset_id" > "$STATE"
 echo "Nouveau build synchronisé : $sha ($asset_id)"

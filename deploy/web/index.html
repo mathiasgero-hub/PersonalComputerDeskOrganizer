@@ -80,15 +80,15 @@
   </header>
 
   <div class="actions">
-    <a class="btn btn-primary" id="dl-exe" href="download/PersonalComputerDeskOrganizer.exe" download>Télécharger pour Windows</a>
-    <a class="btn btn-ghost" href="download/PersonalComputerDeskOrganizer.zip" download>Version .zip</a>
+    <a class="btn btn-primary" id="dl-main" href="download/PersonalComputerDeskOrganizer-Setup.exe" download>Télécharger pour Windows</a>
+    <a class="btn btn-ghost" href="download/PersonalComputerDeskOrganizer.exe" download>Version portable (sans installation)</a>
   </div>
   <p class="meta" id="meta"></p>
 
   <h2>Installation</h2>
   <ol>
-    <li>Téléchargez <b>PersonalComputerDeskOrganizer.exe</b> (Windows 10 ou 11, 64 bits).</li>
-    <li>Placez-le où vous voulez, par exemple dans <code>Documents</code>, puis double-cliquez dessus. Aucune installation ni droits administrateur requis.</li>
+    <li>Téléchargez <b>PersonalComputerDeskOrganizer-Setup.exe</b> (Windows 10 ou 11, 64 bits).</li>
+    <li>Lancez-le et suivez les étapes. Aucun droit administrateur n'est requis. L'application apparaît ensuite dans le menu Démarrer et dans « Applications installées ».</li>
     <li>Dans ⚙ Réglages, activez le démarrage automatique si vous le souhaitez.</li>
   </ol>
   <div class="note">
@@ -96,7 +96,7 @@
   </div>
 
   <h2>Mise à jour</h2>
-  <p>Téléchargez la nouvelle version et remplacez l'ancien fichier .exe. Vos profils sont conservés dans <code>%AppData%\PersonalComputerDeskOrganizer</code>.</p>
+  <p>Téléchargez et lancez le nouvel installateur : il remplace l'ancienne version au même endroit. Vos profils sont conservés dans <code>%AppData%\PersonalComputerDeskOrganizer</code>. Pour désinstaller : Paramètres → Applications → Applications installées.</p>
 
   <footer>
     Code source sur <a href="https://github.com/mathiasgero-hub/PersonalComputerDeskOrganizer">GitHub</a>
@@ -109,10 +109,10 @@
       const mb = n => (n / 1048576).toFixed(0) + " Mo";
       const d = new Date(v.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
       const el = document.getElementById("meta");
-      el.textContent = "Version du " + d + " · ";
+      el.textContent = (v.version ? "Version " + v.version + " du " : "Version du ") + d + " · ";
       const c = document.createElement("code"); c.textContent = v.commit; el.append(c);
-      if (v.exeSize) el.append(" · " + mb(v.exeSize));
-      else document.getElementById("dl-exe").href = "download/PersonalComputerDeskOrganizer.zip";
+      if (v.setupSize) el.append(" · " + mb(v.setupSize));
+      else document.getElementById("dl-main").href = "download/PersonalComputerDeskOrganizer.exe";
     })
     .catch(() => {});
 </script>
