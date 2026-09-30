@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PersonalComputerDeskOrganizer</title>
+<meta name="description" content="Recréez automatiquement vos bureaux virtuels Windows, leurs zones d'écran et leurs applications.">
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0A0A0D; --charcoal: #15151B; --charcoal2: #1B1B22;
+    --gold: #C9A227; --gold-light: #E9CF6E; --gold-dim: #5E4F1C;
+    --text: #E8E2D0; --muted: #9B9382;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--black); color: var(--text);
+    font: 16px/1.6 "Segoe UI", Arial, sans-serif;
+    background-image:
+      repeating-linear-gradient(90deg, transparent 0 79px, rgba(201,162,39,.035) 79px 80px),
+      radial-gradient(ellipse at 50% 0%, rgba(201,162,39,.10), transparent 60%);
+  }
+  .frame {
+    max-width: 760px; margin: 48px auto; padding: 56px 48px;
+    background: var(--charcoal); border: 1px solid var(--gold-dim); position: relative;
+    outline: 1px solid var(--gold-dim); outline-offset: 6px;
+  }
+  .frame::before, .frame::after {
+    content: ""; position: absolute; width: 36px; height: 36px; border: 2px solid var(--gold);
+  }
+  .frame::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+  .frame::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+  header { text-align: center; }
+  .logo { width: 150px; height: 150px; border-radius: 22px; box-shadow: 0 0 40px rgba(201,162,39,.18); }
+  h1 {
+    font-family: Cinzel, Georgia, serif; font-weight: 600; color: var(--gold-light);
+    letter-spacing: .06em; font-size: clamp(22px, 5vw, 34px); margin: 28px 0 6px; line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+  .rule { display: flex; align-items: center; gap: 12px; justify-content: center; margin: 14px 0 22px; color: var(--gold); }
+  .rule::before, .rule::after { content: ""; height: 1px; width: 90px; background: linear-gradient(90deg, transparent, var(--gold)); }
+  .rule::after { transform: scaleX(-1); }
+  .tagline { color: var(--muted); max-width: 520px; margin: 0 auto; }
+  .actions { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 36px 0 8px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    font-family: Cinzel, Georgia, serif; letter-spacing: .08em; text-decoration: none;
+    padding: 16px 34px; min-width: 300px; border: 1px solid var(--gold); transition: .2s;
+  }
+  .btn-primary { background: linear-gradient(180deg, var(--gold-light), var(--gold)); color: var(--black); font-weight: 600; }
+  .btn-primary:hover { filter: brightness(1.08); box-shadow: 0 0 24px rgba(201,162,39,.35); }
+  .btn-ghost { color: var(--gold-light); font-size: 14px; padding: 11px 24px; }
+  .btn-ghost:hover { background: rgba(201,162,39,.08); }
+  .meta { text-align: center; color: var(--muted); font-size: 13px; min-height: 1.6em; }
+  .meta code { color: var(--gold); }
+  h2 { font-family: Cinzel, Georgia, serif; font-weight: 400; color: var(--gold); letter-spacing: .08em; font-size: 18px; margin: 44px 0 12px; }
+  ul, ol { padding-left: 20px; margin: 0; }
+  li { margin: 6px 0; }
+  li::marker { color: var(--gold); }
+  .note { background: var(--charcoal2); border-left: 2px solid var(--gold); padding: 14px 18px; margin-top: 14px; font-size: 14px; color: var(--muted); }
+  .note b { color: var(--text); font-weight: 600; }
+  footer { text-align: center; margin-top: 44px; font-size: 13px; color: var(--muted); }
+  footer a { color: var(--gold); }
+  @media (max-width: 640px) {
+    .frame { margin: 16px; padding: 36px 20px; outline-offset: 4px; }
+    .btn { min-width: 0; width: 100%; padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+<main class="frame">
+  <header>
+    <img class="logo" src="logo.jpg" alt="">
+    <h1>PersonalComputer<wbr>DeskOrganizer</h1>
+    <div class="rule">◆</div>
+    <p class="tagline">Recréez en un clic vos bureaux virtuels Windows, leurs zones d'écran et les applications, fichiers et pages web qui doivent s'y ouvrir.</p>
+  </header>
+
+  <div class="actions">
+    <a class="btn btn-primary" id="dl-exe" href="download/PersonalComputerDeskOrganizer.exe" download>Télécharger pour Windows</a>
+    <a class="btn btn-ghost" href="download/PersonalComputerDeskOrganizer.zip" download>Version .zip</a>
+  </div>
+  <p class="meta" id="meta"></p>
+
+  <h2>Installation</h2>
+  <ol>
+    <li>Téléchargez <b>PersonalComputerDeskOrganizer.exe</b> (Windows 10 ou 11, 64 bits).</li>
+    <li>Placez-le où vous voulez, par exemple dans <code>Documents</code>, puis double-cliquez dessus. Aucune installation ni droits administrateur requis.</li>
+    <li>Dans ⚙ Réglages, activez le démarrage automatique si vous le souhaitez.</li>
+  </ol>
+  <div class="note">
+    <b>Avertissement Windows SmartScreen :</b> l'application n'est pas signée numériquement. Si Windows affiche « Windows a protégé votre ordinateur », cliquez sur <b>Informations complémentaires</b>, puis sur <b>Exécuter quand même</b>.
+  </div>
+
+  <h2>Mise à jour</h2>
+  <p>Téléchargez la nouvelle version et remplacez l'ancien fichier .exe. Vos profils sont conservés dans <code>%AppData%\PersonalComputerDeskOrganizer</code>.</p>
+
+  <footer>
+    Code source sur <a href="https://github.com/mathiasgero-hub/PersonalComputerDeskOrganizer">GitHub</a>
+  </footer>
+</main>
+<script>
+  fetch("download/version.json", { cache: "no-cache" })
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(v => {
+      const mb = n => (n / 1048576).toFixed(0) + " Mo";
+      const d = new Date(v.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+      const el = document.getElementById("meta");
+      el.textContent = "Version du " + d + " · ";
+      const c = document.createElement("code"); c.textContent = v.commit; el.append(c);
+      if (v.exeSize) el.append(" · " + mb(v.exeSize));
+      else document.getElementById("dl-exe").href = "download/PersonalComputerDeskOrganizer.zip";
+    })
+    .catch(() => {});
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+[Unit]
+Description=Synchronise desk-organizer.artmonie.com avec GitHub
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/desk-organizer-sync.sh

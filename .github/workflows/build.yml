@@ -3,6 +3,7 @@ name: Build PersonalComputerDeskOrganizer
 on:
   push:
     branches: [ "main" ]
+    paths-ignore: [ "deploy/**", "**.md" ]
   workflow_dispatch: {}
 
 permissions:
